@@ -13,12 +13,19 @@ with open('stopwords', 'r') as StopWordsFile:
             StopWordsList.append(line)
 StopWordsFile.close()
     # print(StopWordsList)
-#记录每个在语料库中的单词，并生成每个单词出现的文档数目，将其导入word.txt
+#计算训练集中每类文章出现次数
+FileSum=[]
+for cate in reuters.categories():
+    CateSum=0
+    for file in reuters.fileids(cate):
+        if file in reuters.fileids()[3019:]:
+            CateSum+=1
+    FileSum.append(CateSum)
+
 #记录出现过的单词,并记录次数
 List=reuters.categories()
 ClassList=[]
 for i in range(len(List)):
-
     List1 = {}
     #计算每一类文档的特征词语和词频
     for j in reuters.fileids(List[i]):
@@ -49,14 +56,17 @@ for i in range(len(List)):
                     if ch_j in StopWordsList:
                         continue
                     if ch_j not in List1:
-                        List1.setdefault(ch_j, 0)
+                        List1.setdefault(ch_j, 1)
                     else:
                         List1[ch_j] += 1
             fp.close()
-    sortList1=sorted(List1.items(),key=lambda x:x[1],reverse=True)[:10]
-    print(sortList1)
+    sortList1=sorted(List1.items(),key=lambda x:x[1],reverse=True)[:100]
+    sortList2=[]
+    for voc in sortList1:
+        sortList2.append((voc[0],voc[1]/FileSum[i]))
+    print(sortList2)
     List1.clear()
-    ClassList.append(sortList1)
+    ClassList.append(sortList2)
 #将结果写入classword.txt
 f=open("classword.txt",'w+',encoding='utf-8')
 #print(List1)
@@ -64,7 +74,8 @@ for i in ClassList:
     for j in i:
         f.write(j[0])
         f.write(' ')
-
+        f.write(str(j[1]))
+        f.write(' ')
     f.write('\n')
 f.close()
 

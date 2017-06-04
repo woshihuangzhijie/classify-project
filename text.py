@@ -58,7 +58,7 @@ List=reuters.fileids()[3019:]
             if ch_j in StopWordsList:
                 continue
             if ch_j not in List1:
-                List1.setdefault(ch_j, 0)
+                List1.setdefault(ch_j, 1)
             if ch_j not in li:
                 List1[ch_j] += 1
                 li.append(ch_j)
@@ -179,7 +179,7 @@ class SimilarText:
         InputFile.close()
         #print(InputFileVectorKey)
         #print(InputFileVectorValue)
-        #计算特征向量分量的ID-ITF值
+        #计算特征向量分量的IF-IDF值
 
         for i in InputFileVector:
             InputFileVector[i] /=length
@@ -232,7 +232,8 @@ if __name__ == "__main__":
         TopicWord = []
         line = line.strip()
         V = line.split(' ')
-        TopicWord.append(V)
+        for i in range(0,len(V),2):
+            TopicWord.append((V[i],float(V[i+1])))
         Top.append(TopicWord)
     f.close()
     S =SimilarText()
@@ -245,22 +246,23 @@ if __name__ == "__main__":
     index=0
     TrueCount=0
     TestList=reuters.fileids()[:3018]
-    #Test=random.sample(TestList, 200)
-    for TestItem in TestList[:200]:#[:3000]:#reuters.fileids('earn'):#
+    Test=random.sample(TestList, 500)
+    for TestItem in Test:#List[:200]:#[:3000]:#reuters.fileids('earn'):#
         print(TestItem)
         Topic = {}
         TestVector = S.FileVector(TestItem)
         #print(TestVector)
+        dis=[]
         for i in range(len(Top)):
-            for vector in TestVector:
-                if vector in Top[i]:
-                    t=Top[i].index(vector)
-                    Topic.setdefault(reuters.categories[i],10-t)
+            dis.append((reuters.categories()[i],S.SimValue(TestVector, Top[i])))
+        dis.sort(key=lambda x:x[1])
+        for x in range(10):
+            Topic.setdefault(dis[x][0],20-2*x)
         Dis={}
         for i in range(len(FileList)):
             Dis.setdefault(FileList[i], S.SimValue(TestVector,TopicVector[i]))
         # 距离测试点最近的k个点
-        R = sorted(Dis.items(), key=lambda x: x[1])[:25]
+        R = sorted(Dis.items(), key=lambda x: x[1])[:35]
         FileTuple, FileKey = zip(*R)
         dis=1
         for r in FileTuple:
@@ -268,16 +270,10 @@ if __name__ == "__main__":
                 if x not in Topic:
                     Topic.setdefault(x, dis)
                 else:
-                    Topic[x] += 20-dis
+                    Topic[x] += 35-dis
             dis+=1
-        result=sorted(Topic.items(), key=lambda x: x[1], reverse=True)[:1]#[:2]
-        '''if len(result)>1:
-            if result[1][1]/result[0][1]<0.6 :
-                result=result[:1]'''
-        if len(result) > 1:
-            print(result[0][0], result[1][0])
-        else:
-            print(result[0][0])
+        result=sorted(Topic.items(), key=lambda x: x[1], reverse=True)[:1]
+        print(result[0][0])
         flag=0
         for r in result:
             if r[0] in reuters.categories(TestItem):

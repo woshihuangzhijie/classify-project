@@ -19,7 +19,8 @@ for line in lines:
     TopicWord = []
     line = line.strip()
     V = line.split(' ')
-    TopicWord.append(V)
+    for i in range(0,len(V),2):
+        TopicWord.append((V[i],float(V[i+1])))
     Top.append(TopicWord)
 f.close()
 S =text.SimilarText()
@@ -36,24 +37,24 @@ while True:
     print("please enter your file name for test")
     string=input()
     TestItem = 'test/'+string
-    if TestItem not in reuters.fileids():
+    '''if TestItem not in reuters.fileids():
         print('your file name does not exist')
-        continue
+        continue'''
     print(TestItem)
     Topic = {}
     TestVector = S.FileVector(TestItem)
 
-    # print(TestVector)
+    dis = []
     for i in range(len(Top)):
-        for vector in TestVector:
-            if vector in Top[i]:
-                t = Top[i].index(vector)
-                Topic.setdefault(reuters.categories[i], 10 - t)
+        dis.append((reuters.categories()[i], S.SimValue(TestVector, Top[i])))
+    dis.sort(key=lambda x: x[1])
+    for x in range(10):
+        Topic.setdefault(dis[x][0], 20 - 2 * x)
     Dis = {}
     for i in range(len(FileList)):
         Dis.setdefault(FileList[i], S.SimValue(TestVector, TopicVector[i]))
     # 距离测试点最近的k个点
-    R = sorted(Dis.items(), key=lambda x: x[1])[:20]
+    R = sorted(Dis.items(), key=lambda x: x[1])[:25]
     FileTuple, FileKey = zip(*R)
     dis = 1
     for r in FileTuple:
@@ -61,7 +62,7 @@ while True:
             if x not in Topic:
                 Topic.setdefault(x, dis)
             else:
-                Topic[x] += 20 - dis
+                Topic[x] += 25 - dis
         dis += 1
     result = sorted(Topic.items(), key=lambda x: x[1], reverse=True)[:1]#[:2]
     '''if len(result) > 1:
